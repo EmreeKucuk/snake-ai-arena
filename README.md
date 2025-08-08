@@ -1,5 +1,7 @@
 # Snake AI Arena
 
+![Snake AI Arena - Main Page](mainpage.png)
+
 An interactive web application where users can play the classic Snake game while competing against AI bots powered by different pathfinding algorithms. Features multiple grid sizes, color themes, and advanced game mechanics.
 
 ## 🎮 Features
