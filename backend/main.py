@@ -18,7 +18,7 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:3001", "http://127.0.0.1:3001"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -51,6 +51,8 @@ async def get_ai_move(request: AIRequest):
     """
     try:
         logger.info(f"Processing AI move request with algorithm: {request.algorithm}")
+        logger.info(f"AI snake head: ({request.game_state.ai_snake[0].x}, {request.game_state.ai_snake[0].y})")
+        logger.info(f"Grid size: {request.game_state.grid_size}")
         
         # Validate algorithm
         if request.algorithm not in ALGORITHM_MAP:
@@ -65,7 +67,26 @@ async def get_ai_move(request: AIRequest):
         # Calculate the next move
         direction = algorithm_func(request.game_state)
         
-        logger.info(f"AI move calculated: {direction}")
+        # Safety check: ensure the direction won't cause immediate collision
+        head = request.game_state.ai_snake[0]
+        obstacles = set()
+        for pos in request.game_state.ai_snake[:-1]:
+            obstacles.add((pos.x, pos.y))
+        for pos in request.game_state.player_snake:
+            obstacles.add((pos.x, pos.y))
+        
+        # Get safe directions
+        safe_directions = PathfindingAlgorithms.get_safe_directions(head, request.game_state.grid_size, obstacles)
+        
+        # If the calculated direction is not safe, use a safe one
+        if direction not in safe_directions and safe_directions:
+            logger.warning(f"AI direction {direction} not safe, using safe direction instead")
+            direction = safe_directions[0]
+        elif not safe_directions:
+            logger.warning("No safe directions available for AI!")
+            # Keep the calculated direction as a last resort
+        
+        logger.info(f"Final AI move: {direction}")
         
         return AIResponse(
             direction=direction,

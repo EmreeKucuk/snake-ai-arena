@@ -3,10 +3,12 @@ import {
   GameBoard, 
   AlgorithmSelector, 
   GameStats, 
-  GameControls 
+  GameControls,
+  GridSizeSelector,
+  ColorThemeSelector
 } from './components';
 import { useGameLogic } from './hooks';
-import { Algorithm, Direction, GameConfig } from './types';
+import { Algorithm, Direction, GameConfig, GridSize, ColorTheme } from './types';
 import { INITIAL_GAME_SPEED } from './utils/gameLogic';
 import { Bot, Wifi, WifiOff } from 'lucide-react';
 
@@ -15,6 +17,7 @@ const App = () => {
     gridSize: 20,
     gameSpeed: INITIAL_GAME_SPEED,
     algorithm: 'random',
+    colorTheme: 'classic',
   });
 
   const {
@@ -29,6 +32,24 @@ const App = () => {
   // Handle keyboard input
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
+      // Handle game control shortcuts regardless of game state
+      if (event.key === ' ') {
+        event.preventDefault();
+        if (gameState.gameStatus === 'playing') {
+          pauseGame();
+        } else {
+          startGame();
+        }
+        return;
+      }
+      
+      if (event.key === 'r' || event.key === 'R') {
+        event.preventDefault();
+        resetGame();
+        return;
+      }
+
+      // Handle movement only during gameplay
       if (gameState.gameStatus !== 'playing') return;
 
       let direction: Direction | null = null;
@@ -54,14 +75,6 @@ const App = () => {
         case 'D':
           direction = 'RIGHT';
           break;
-        case ' ':
-          event.preventDefault();
-          if (gameState.gameStatus === 'playing') {
-            pauseGame();
-          } else {
-            startGame();
-          }
-          return;
       }
 
       if (direction) {
@@ -72,12 +85,23 @@ const App = () => {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [gameState.gameStatus, updatePlayerDirection, pauseGame, startGame]);
+  }, [gameState.gameStatus, updatePlayerDirection, pauseGame, startGame, resetGame]);
 
   const handleAlgorithmChange = (algorithm: Algorithm) => {
-    if (gameState.gameStatus === 'waiting') {
+    if (gameState.gameStatus === 'waiting' || gameState.gameStatus === 'gameOver') {
       setGameConfig(prev => ({ ...prev, algorithm }));
     }
+  };
+
+  const handleGridSizeChange = (gridSize: GridSize) => {
+    if (gameState.gameStatus === 'waiting' || gameState.gameStatus === 'gameOver') {
+      setGameConfig(prev => ({ ...prev, gridSize }));
+      resetGame(); // Reset to apply new grid size
+    }
+  };
+
+  const handleThemeChange = (colorTheme: ColorTheme) => {
+    setGameConfig(prev => ({ ...prev, colorTheme }));
   };
 
   const handleSpeedChange = (speed: number) => {
@@ -116,17 +140,45 @@ const App = () => {
           </div>
         </header>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Left Panel - Algorithm Selection */}
+        <div className="grid lg:grid-cols-4 gap-6">
+          {/* Left Panel - Game Configuration */}
           <div className="lg:col-span-1 space-y-6">
+            <GridSizeSelector
+              selectedSize={gameConfig.gridSize}
+              onSizeChange={handleGridSizeChange}
+              disabled={gameState.gameStatus === 'playing'}
+            />
+            
+            <ColorThemeSelector
+              selectedTheme={gameConfig.colorTheme}
+              onThemeChange={handleThemeChange}
+              disabled={false}
+            />
+            
             <AlgorithmSelector
               selectedAlgorithm={gameConfig.algorithm}
               onAlgorithmChange={handleAlgorithmChange}
-              disabled={isGameControlsDisabled}
+              disabled={gameState.gameStatus === 'playing'}
+            />
+          </div>
+
+          {/* Center Panel - Game Board */}
+          <div className="lg:col-span-2 flex flex-col items-center space-y-6">
+            <GameBoard 
+              gameState={gameState} 
+              colorTheme={gameConfig.colorTheme}
+            />
+            
+            <GameControls
+              isPlaying={gameState.gameStatus === 'playing'}
+              isPaused={gameState.gameStatus === 'paused'}
+              onStart={startGame}
+              onPause={pauseGame}
+              onReset={resetGame}
             />
             
             {/* Game Speed Control */}
-            <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
+            <div className="w-full max-w-md bg-gray-800 p-4 rounded-lg border border-gray-700">
               <h3 className="text-lg font-bold text-white mb-3">Game Speed</h3>
               <div className="space-y-2">
                 <input
@@ -146,38 +198,15 @@ const App = () => {
                 </div>
               </div>
             </div>
-
-            {/* Controls Help */}
-            <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
-              <h3 className="text-lg font-bold text-white mb-3">Controls</h3>
-              <div className="text-sm text-gray-400 space-y-1">
-                <div>🎮 Arrow Keys or WASD to move</div>
-                <div>⏸️ Space to pause/resume</div>
-                <div>🔄 Reset to restart game</div>
-              </div>
-            </div>
           </div>
 
-          {/* Center Panel - Game Board */}
-          <div className="lg:col-span-1 flex flex-col items-center space-y-6">
-            <GameBoard gameState={gameState} />
-            
-            <GameControls
-              isPlaying={gameState.gameStatus === 'playing'}
-              isPaused={gameState.gameStatus === 'paused'}
-              onStart={startGame}
-              onPause={pauseGame}
-              onReset={resetGame}
-            />
-          </div>
-
-          {/* Right Panel - Game Stats */}
-          <div className="lg:col-span-1">
+          {/* Right Panel - Game Stats and Info */}
+          <div className="lg:col-span-1 space-y-6">
             <GameStats gameState={gameState} />
             
             {/* Algorithm Info */}
             {gameConfig.algorithm && (
-              <div className="mt-6 bg-gray-800 p-4 rounded-lg border border-gray-700">
+              <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
                 <h3 className="text-lg font-bold text-white mb-3">Current AI</h3>
                 <div className="text-sm text-gray-300">
                   <div className="font-medium text-white mb-1">
@@ -194,6 +223,17 @@ const App = () => {
                 </div>
               </div>
             )}
+
+            {/* Controls Help */}
+            <div className="bg-gray-800 p-4 rounded-lg border border-gray-700">
+              <h3 className="text-lg font-bold text-white mb-3">Controls</h3>
+              <div className="text-sm text-gray-400 space-y-1">
+                <div>🎮 Arrow Keys or WASD to move</div>
+                <div>⏸️ Space to pause/resume</div>
+                <div>🔄 R key to reset game</div>
+                <div>🎯 {gameConfig.gridSize === 20 ? '1' : gameConfig.gridSize === 30 ? '2' : '3'} fruit(s) on {gameConfig.gridSize}×{gameConfig.gridSize} grid</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -31,31 +31,108 @@ class PathfindingAlgorithms:
         return neighbors
     
     @staticmethod
+    def get_safe_directions(head: Position, grid_size: int, obstacles: Set[Tuple[int, int]]) -> List[Direction]:
+        """Get all safe directions that won't cause collision."""
+        safe_directions = []
+        for direction, (dx, dy) in PathfindingAlgorithms.DIRECTIONS.items():
+            next_pos = Position(x=head.x + dx, y=head.y + dy)
+            if PathfindingAlgorithms.is_valid_position(next_pos, grid_size, obstacles):
+                safe_directions.append(direction)
+        return safe_directions
+
+    @staticmethod
     def random_move(game_state: GameStateInput) -> Direction:
         """Random movement algorithm."""
-        return random.choice(list(PathfindingAlgorithms.DIRECTIONS.keys()))
-    
+        head = game_state.ai_snake[0]
+        
+        # Create obstacles set
+        obstacles = set()
+        for pos in game_state.ai_snake[:-1]:  # Exclude tail as it will move
+            obstacles.add((pos.x, pos.y))
+        for pos in game_state.player_snake:
+            obstacles.add((pos.x, pos.y))
+        
+        # Get safe directions
+        safe_directions = PathfindingAlgorithms.get_safe_directions(head, game_state.grid_size, obstacles)
+        
+        if safe_directions:
+            return random.choice(safe_directions)
+        else:
+            # No safe moves, return any direction (will cause game over)
+            return random.choice(list(PathfindingAlgorithms.DIRECTIONS.keys()))
+
+    @staticmethod
+    def get_closest_food(head: Position, food_list: List[Position]) -> Position:
+        """Get the closest food to the snake head."""
+        if not food_list:
+            return Position(x=0, y=0)  # Fallback
+        
+        closest_food = food_list[0]
+        min_distance = abs(head.x - closest_food.x) + abs(head.y - closest_food.y)
+        
+        for food in food_list[1:]:
+            distance = abs(head.x - food.x) + abs(head.y - food.y)
+            if distance < min_distance:
+                min_distance = distance
+                closest_food = food
+        
+        return closest_food
+
     @staticmethod
     def greedy_move(game_state: GameStateInput) -> Direction:
-        """Greedy algorithm - always move towards food."""
+        """Greedy algorithm - always move towards the closest food."""
         head = game_state.ai_snake[0]
-        food = game_state.food
+        food = PathfindingAlgorithms.get_closest_food(head, game_state.food)
         
-        # Calculate direction towards food
+        # Create obstacles set
+        obstacles = set()
+        for pos in game_state.ai_snake[:-1]:
+            obstacles.add((pos.x, pos.y))
+        for pos in game_state.player_snake:
+            obstacles.add((pos.x, pos.y))
+        
+        # Get safe directions
+        safe_directions = PathfindingAlgorithms.get_safe_directions(head, game_state.grid_size, obstacles)
+        
+        if not safe_directions:
+            return random.choice(list(PathfindingAlgorithms.DIRECTIONS.keys()))
+        
+        # Calculate direction towards food, but only from safe directions
         dx = food.x - head.x
         dy = food.y - head.y
         
         # Prioritize the axis with larger difference
+        preferred_directions = []
         if abs(dx) > abs(dy):
-            return "RIGHT" if dx > 0 else "LEFT"
+            if dx > 0 and "RIGHT" in safe_directions:
+                preferred_directions.append("RIGHT")
+            elif dx < 0 and "LEFT" in safe_directions:
+                preferred_directions.append("LEFT")
+            if dy > 0 and "DOWN" in safe_directions:
+                preferred_directions.append("DOWN")
+            elif dy < 0 and "UP" in safe_directions:
+                preferred_directions.append("UP")
         else:
-            return "DOWN" if dy > 0 else "UP"
+            if dy > 0 and "DOWN" in safe_directions:
+                preferred_directions.append("DOWN")
+            elif dy < 0 and "UP" in safe_directions:
+                preferred_directions.append("UP")
+            if dx > 0 and "RIGHT" in safe_directions:
+                preferred_directions.append("RIGHT")
+            elif dx < 0 and "LEFT" in safe_directions:
+                preferred_directions.append("LEFT")
+        
+        # Return preferred direction or any safe direction
+        if preferred_directions:
+            return preferred_directions[0]
+        else:
+            return random.choice(safe_directions)
     
     @staticmethod
     def bfs_move(game_state: GameStateInput) -> Direction:
         """Breadth-First Search pathfinding."""
         head = game_state.ai_snake[0]
-        food = game_state.food
+        food = PathfindingAlgorithms.get_closest_food(head, game_state.food)
         grid_size = game_state.grid_size
         
         # Create obstacles set (all snake positions except AI tail)
@@ -90,7 +167,7 @@ class PathfindingAlgorithms:
     def dfs_move(game_state: GameStateInput) -> Direction:
         """Depth-First Search pathfinding."""
         head = game_state.ai_snake[0]
-        food = game_state.food
+        food = PathfindingAlgorithms.get_closest_food(head, game_state.food)
         grid_size = game_state.grid_size
         
         # Create obstacles set
@@ -125,7 +202,7 @@ class PathfindingAlgorithms:
     def dijkstra_move(game_state: GameStateInput) -> Direction:
         """Dijkstra's algorithm pathfinding."""
         head = game_state.ai_snake[0]
-        food = game_state.food
+        food = PathfindingAlgorithms.get_closest_food(head, game_state.food)
         grid_size = game_state.grid_size
         
         # Create obstacles set
@@ -136,12 +213,12 @@ class PathfindingAlgorithms:
             obstacles.add((pos.x, pos.y))
         
         # Dijkstra's algorithm
-        # Priority queue: (distance, position, path)
-        pq = [(0, head, [])]
+        # Priority queue: (distance, position_tuple, position, path)
+        pq = [(0, (head.x, head.y), head, [])]
         distances = {(head.x, head.y): 0}
         
         while pq:
-            current_dist, current_pos, path = heapq.heappop(pq)
+            current_dist, pos_tuple, current_pos, path = heapq.heappop(pq)
             
             if current_pos.x == food.x and current_pos.y == food.y:
                 return path[0] if path else "UP"
@@ -157,7 +234,7 @@ class PathfindingAlgorithms:
                     if new_dist < distances.get((next_pos.x, next_pos.y), float('inf')):
                         distances[(next_pos.x, next_pos.y)] = new_dist
                         new_path = path + [direction]
-                        heapq.heappush(pq, (new_dist, next_pos, new_path))
+                        heapq.heappush(pq, (new_dist, (next_pos.x, next_pos.y), next_pos, new_path))
         
         # No path found, use greedy
         return PathfindingAlgorithms.greedy_move(game_state)
@@ -171,7 +248,7 @@ class PathfindingAlgorithms:
     def astar_move(game_state: GameStateInput) -> Direction:
         """A* pathfinding algorithm."""
         head = game_state.ai_snake[0]
-        food = game_state.food
+        food = PathfindingAlgorithms.get_closest_food(head, game_state.food)
         grid_size = game_state.grid_size
         
         # Create obstacles set
@@ -182,12 +259,12 @@ class PathfindingAlgorithms:
             obstacles.add((pos.x, pos.y))
         
         # A* algorithm
-        # Priority queue: (f_score, g_score, position, path)
-        pq = [(PathfindingAlgorithms.manhattan_distance(head, food), 0, head, [])]
+        # Priority queue: (f_score, g_score, position_tuple, position, path)
+        pq = [(PathfindingAlgorithms.manhattan_distance(head, food), 0, (head.x, head.y), head, [])]
         g_scores = {(head.x, head.y): 0}
         
         while pq:
-            f_score, g_score, current_pos, path = heapq.heappop(pq)
+            f_score, g_score, pos_tuple, current_pos, path = heapq.heappop(pq)
             
             if current_pos.x == food.x and current_pos.y == food.y:
                 return path[0] if path else "UP"
@@ -205,7 +282,7 @@ class PathfindingAlgorithms:
                         h_score = PathfindingAlgorithms.manhattan_distance(next_pos, food)
                         f_score = tentative_g_score + h_score
                         new_path = path + [direction]
-                        heapq.heappush(pq, (f_score, tentative_g_score, next_pos, new_path))
+                        heapq.heappush(pq, (f_score, tentative_g_score, (next_pos.x, next_pos.y), next_pos, new_path))
         
         # No path found, use greedy
         return PathfindingAlgorithms.greedy_move(game_state)

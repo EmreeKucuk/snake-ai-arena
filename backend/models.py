@@ -12,7 +12,7 @@ class Position(BaseModel):
 class GameStateInput(BaseModel):
     ai_snake: List[Position]
     player_snake: List[Position]
-    food: Position
+    food: List[Position]
     grid_size: int
 
 class AIRequest(BaseModel):

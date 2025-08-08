@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { GameState, Direction, GameConfig } from '../types';
+import { GameState, Direction, GameConfig, Position } from '../types';
 import { 
   createInitialGameState, 
   moveSnake, 
@@ -8,9 +8,10 @@ import {
   checkSnakeCollision, 
   checkFoodEaten, 
   growSnake, 
-  generateFood, 
+  generateMultipleFruits, 
   getAllOccupiedPositions,
-  isValidDirection
+  isValidDirection,
+  getFruitCount
 } from '../utils/gameLogic';
 import { ApiService } from '../services';
 
@@ -22,6 +23,12 @@ export const useGameLogic = (config: GameConfig) => {
   
   const gameLoopRef = useRef<number | null>(null);
   const currentDirectionRef = useRef<Direction>('RIGHT');
+  const gameStateRef = useRef<GameState>(gameState);
+
+  // Update ref when state changes
+  useEffect(() => {
+    gameStateRef.current = gameState;
+  }, [gameState]);
 
   // Check API connection on mount
   useEffect(() => {
@@ -49,48 +56,48 @@ export const useGameLogic = (config: GameConfig) => {
   }, [gameState.gameStatus, gameState.playerSnake.direction]);
 
   const gameLoop = useCallback(async () => {
-    setGameState(currentState => {
-      if (currentState.gameStatus !== 'playing') {
-        return currentState;
-      }
+    const currentState = gameStateRef.current;
+    
+    if (currentState.gameStatus !== 'playing') {
+      return;
+    }
 
-      // Move player snake
-      const newPlayerSnake = moveSnake(currentState.playerSnake, currentDirectionRef.current);
-      
-      // We'll get AI move and update in the next tick
-      return {
-        ...currentState,
-        playerSnake: {
-          ...newPlayerSnake,
-          direction: currentDirectionRef.current,
-        },
-      };
-    });
+    // Move player snake first
+    const newPlayerSnake = moveSnake(currentState.playerSnake, currentDirectionRef.current);
+    
+    // Create updated game state for AI calculation
+    const gameStateForAI = {
+      ...currentState,
+      playerSnake: {
+        ...newPlayerSnake,
+        direction: currentDirectionRef.current,
+      },
+    };
 
-    // Get AI move
+    // Get AI move based on updated game state
     let aiDirection: Direction = 'UP';
     if (isAPIConnected) {
       try {
-        aiDirection = await ApiService.getAIMove(gameState, config.algorithm);
+        aiDirection = await ApiService.getAIMove(gameStateForAI, config.algorithm);
       } catch (error) {
         console.error('Failed to get AI move:', error);
         // Fallback to simple direction
-        aiDirection = gameState.aiSnake.direction;
+        aiDirection = currentState.aiSnake.direction;
       }
     } else {
       // Simple fallback AI when backend is not available
-      aiDirection = gameState.aiSnake.direction;
+      aiDirection = currentState.aiSnake.direction;
     }
+
+    // Move AI snake
+    const newAiSnake = moveSnake(currentState.aiSnake, aiDirection);
 
     setGameState(currentState => {
       if (currentState.gameStatus !== 'playing') {
         return currentState;
       }
 
-      const playerSnake = currentState.playerSnake;
-      const newAiSnake = moveSnake(currentState.aiSnake, aiDirection);
-      
-      let newPlayerSnake = playerSnake;
+      let finalPlayerSnake = newPlayerSnake;
       let newAiSnake_ = newAiSnake;
       let newFood = currentState.food;
       let newScore = currentState.score;
@@ -98,13 +105,13 @@ export const useGameLogic = (config: GameConfig) => {
       let winner: GameState['winner'] = currentState.winner;
 
       // Check collisions
-      const playerHitWall = checkCollision(playerSnake.positions[0], currentState.gridSize);
-      const playerHitSelf = checkSelfCollision(playerSnake);
-      const playerHitAI = checkSnakeCollision(playerSnake, newAiSnake_);
+      const playerHitWall = checkCollision(finalPlayerSnake.positions[0], currentState.gridSize);
+      const playerHitSelf = checkSelfCollision(finalPlayerSnake);
+      const playerHitAI = checkSnakeCollision(finalPlayerSnake, newAiSnake_);
       
       const aiHitWall = checkCollision(newAiSnake_.positions[0], currentState.gridSize);
       const aiHitSelf = checkSelfCollision(newAiSnake_);
-      const aiHitPlayer = checkSnakeCollision(newAiSnake_, playerSnake);
+      const aiHitPlayer = checkSnakeCollision(newAiSnake_, finalPlayerSnake);
 
       // Determine winner based on collisions
       const playerDied = playerHitWall || playerHitSelf || playerHitAI;
@@ -121,29 +128,60 @@ export const useGameLogic = (config: GameConfig) => {
         }
       } else {
         // Check food consumption
-        const playerAteFood = checkFoodEaten(playerSnake.positions[0], currentState.food);
-        const aiAteFood = checkFoodEaten(newAiSnake_.positions[0], currentState.food);
+        const playerEatenFood = checkFoodEaten(finalPlayerSnake.positions[0], currentState.food);
+        const aiEatenFood = checkFoodEaten(newAiSnake_.positions[0], currentState.food);
         
-        if (playerAteFood || aiAteFood) {
-          if (playerAteFood) {
-            newPlayerSnake = growSnake(playerSnake);
+        if (playerEatenFood || aiEatenFood) {
+          let newFoodArray = [...currentState.food];
+          
+          if (playerEatenFood) {
+            finalPlayerSnake = growSnake(finalPlayerSnake);
             newScore = { ...newScore, player: newScore.player + 1 };
+            // Remove eaten food
+            newFoodArray = newFoodArray.filter(f => f.x !== playerEatenFood.x || f.y !== playerEatenFood.y);
           }
           
-          if (aiAteFood) {
+          if (aiEatenFood) {
             newAiSnake_ = growSnake(newAiSnake_);
             newScore = { ...newScore, ai: newScore.ai + 1 };
+            // Remove eaten food (if different from player's)
+            if (!playerEatenFood || (playerEatenFood.x !== aiEatenFood.x || playerEatenFood.y !== aiEatenFood.y)) {
+              newFoodArray = newFoodArray.filter(f => f.x !== aiEatenFood.x || f.y !== aiEatenFood.y);
+            }
           }
           
-          // Generate new food
-          const allPositions = getAllOccupiedPositions(newPlayerSnake, newAiSnake_);
-          newFood = generateFood(currentState.gridSize, allPositions);
+          // Generate new fruits to replace eaten ones
+          const allPositions = getAllOccupiedPositions(finalPlayerSnake, newAiSnake_);
+          const currentFruitCount = getFruitCount(currentState.gridSize as any);
+          
+          // Only generate new fruits if we have fewer fruits than required
+          if (newFoodArray.length < currentFruitCount) {
+            const fruitsNeeded = currentFruitCount - newFoodArray.length;
+            for (let i = 0; i < fruitsNeeded; i++) {
+              let newFruit: Position;
+              let attempts = 0;
+              do {
+                newFruit = {
+                  x: Math.floor(Math.random() * currentState.gridSize),
+                  y: Math.floor(Math.random() * currentState.gridSize),
+                };
+                attempts++;
+              } while (
+                (allPositions.some(pos => pos.x === newFruit.x && pos.y === newFruit.y) ||
+                 newFoodArray.some(f => f.x === newFruit.x && f.y === newFruit.y)) &&
+                attempts < 100
+              );
+              newFoodArray.push(newFruit);
+            }
+          }
+          
+          newFood = newFoodArray;
         }
       }
 
       return {
         ...currentState,
-        playerSnake: newPlayerSnake,
+        playerSnake: finalPlayerSnake,
         aiSnake: newAiSnake_,
         food: newFood,
         score: newScore,
@@ -151,20 +189,28 @@ export const useGameLogic = (config: GameConfig) => {
         winner,
       };
     });
-  }, [gameState, config.algorithm, isAPIConnected]);
+  }, [config.algorithm, isAPIConnected]);
 
   const startGame = useCallback(() => {
     if (gameState.gameStatus === 'waiting' || gameState.gameStatus === 'paused') {
       setGameState(prev => ({ ...prev, gameStatus: 'playing' }));
-      
-      const runGameLoop = () => {
-        gameLoop();
-        gameLoopRef.current = setTimeout(runGameLoop, config.gameSpeed);
-      };
-      
-      runGameLoop();
+    } else if (gameState.gameStatus === 'gameOver') {
+      // Auto-reset when starting after game over
+      const newGameState = createInitialGameState(config.gridSize);
+      setGameState({ ...newGameState, gameStatus: 'playing' });
+      currentDirectionRef.current = 'RIGHT';
     }
-  }, [gameState.gameStatus, gameLoop, config.gameSpeed]);
+    
+    const runGameLoop = () => {
+      gameLoop();
+      gameLoopRef.current = setTimeout(runGameLoop, config.gameSpeed);
+    };
+    
+    if (gameLoopRef.current) {
+      clearTimeout(gameLoopRef.current);
+    }
+    runGameLoop();
+  }, [gameState.gameStatus, gameLoop, config.gameSpeed, config.gridSize]);
 
   const pauseGame = useCallback(() => {
     if (gameLoopRef.current) {

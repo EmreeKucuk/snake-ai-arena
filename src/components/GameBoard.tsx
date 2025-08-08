@@ -1,41 +1,46 @@
-import { GameState } from '../types';
+import { GameState, ColorTheme } from '../types';
+import { getThemeColors } from '../utils/themes';
 
 interface GameBoardProps {
   gameState: GameState;
+  colorTheme: ColorTheme;
   className?: string;
 }
 
-export const GameBoard = ({ gameState, className = '' }: GameBoardProps) => {
+export const GameBoard = ({ gameState, colorTheme, className = '' }: GameBoardProps) => {
   const { playerSnake, aiSnake, food, gridSize } = gameState;
+  const theme = getThemeColors(colorTheme);
 
   const getCellType = (x: number, y: number): string => {
     // Check if position is player snake head
     if (playerSnake.positions[0].x === x && playerSnake.positions[0].y === y) {
-      return 'snake-head';
+      return theme.playerSnake.head;
     }
     
     // Check if position is player snake body
     if (playerSnake.positions.slice(1).some(pos => pos.x === x && pos.y === y)) {
-      return 'snake-body';
+      return theme.playerSnake.body;
     }
     
     // Check if position is AI snake head
     if (aiSnake.positions[0].x === x && aiSnake.positions[0].y === y) {
-      return 'ai-snake-head';
+      return theme.aiSnake.head;
     }
     
     // Check if position is AI snake body
     if (aiSnake.positions.slice(1).some(pos => pos.x === x && pos.y === y)) {
-      return 'ai-snake-body';
+      return theme.aiSnake.body;
     }
     
-    // Check if position is food
-    if (food.x === x && food.y === y) {
-      return 'food';
+    // Check if position has food
+    if (food.some(f => f.x === x && f.y === y)) {
+      return `${theme.food} rounded-full`;
     }
     
-    return 'game-cell';
+    return '';
   };
+
+  const cellSize = gridSize === 20 ? 'w-4 h-4' : gridSize === 30 ? 'w-3 h-3' : 'w-2 h-2';
 
   const renderGrid = () => {
     const cells = [];
@@ -45,7 +50,7 @@ export const GameBoard = ({ gameState, className = '' }: GameBoardProps) => {
         cells.push(
           <div
             key={`${x}-${y}`}
-            className={`game-cell ${cellType}`}
+            className={`${cellSize} border ${theme.grid} ${cellType}`}
             data-x={x}
             data-y={y}
           />
@@ -57,7 +62,7 @@ export const GameBoard = ({ gameState, className = '' }: GameBoardProps) => {
 
   return (
     <div 
-      className={`inline-grid gap-0 border-2 border-gray-600 bg-gray-800 p-2 ${className}`}
+      className={`inline-grid gap-0 border-2 ${theme.grid} ${theme.background} p-2 ${className}`}
       style={{ 
         gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
         gridTemplateRows: `repeat(${gridSize}, minmax(0, 1fr))`

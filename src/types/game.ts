@@ -11,7 +11,7 @@ export interface Snake {
 export interface GameState {
   playerSnake: Snake;
   aiSnake: Snake;
-  food: Position;
+  food: Position[];
   gridSize: number;
   score: {
     player: number;
@@ -38,10 +38,20 @@ export interface AlgorithmInfo {
   color: string;
 }
 
+export type GridSize = 20 | 30 | 40;
+
+export type ColorTheme = 
+  | 'classic'
+  | 'neon'
+  | 'ocean'
+  | 'forest'
+  | 'sunset';
+
 export interface GameConfig {
-  gridSize: number;
+  gridSize: GridSize;
   gameSpeed: number;
   algorithm: Algorithm;
+  colorTheme: ColorTheme;
 }
 
 export interface ApiResponse {

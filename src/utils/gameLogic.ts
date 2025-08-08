@@ -1,4 +1,4 @@
-import { Position, Direction, GameState, Snake } from '../types';
+import { Position, Direction, GameState, Snake, GridSize } from '../types';
 
 export const GRID_SIZE = 20;
 export const INITIAL_GAME_SPEED = 150; // milliseconds
@@ -17,7 +17,16 @@ export const OPPOSITE_DIRECTIONS: Record<Direction, Direction> = {
   RIGHT: 'LEFT',
 };
 
-export function createInitialGameState(gridSize: number = GRID_SIZE): GameState {
+export function getFruitCount(gridSize: GridSize): number {
+  switch (gridSize) {
+    case 20: return 1;
+    case 30: return 2;
+    case 40: return 3;
+    default: return 1;
+  }
+}
+
+export function createInitialGameState(gridSize: GridSize = 20): GameState {
   const playerStartX = Math.floor(gridSize / 4);
   const aiStartX = Math.floor((gridSize * 3) / 4);
   const startY = Math.floor(gridSize / 2);
@@ -39,11 +48,38 @@ export function createInitialGameState(gridSize: number = GRID_SIZE): GameState 
       ],
       direction: 'LEFT',
     },
-    food: generateFood(gridSize, []),
+    food: generateMultipleFruits(gridSize, []),
     gridSize,
     score: { player: 0, ai: 0 },
     gameStatus: 'waiting',
   };
+}
+
+export function generateMultipleFruits(gridSize: GridSize, occupiedPositions: Position[]): Position[] {
+  const fruitCount = getFruitCount(gridSize);
+  const fruits: Position[] = [];
+  const allOccupied = new Set(occupiedPositions.map(pos => `${pos.x},${pos.y}`));
+  
+  for (let i = 0; i < fruitCount; i++) {
+    let fruit: Position;
+    let attempts = 0;
+    do {
+      fruit = {
+        x: Math.floor(Math.random() * gridSize),
+        y: Math.floor(Math.random() * gridSize),
+      };
+      attempts++;
+    } while (
+      (allOccupied.has(`${fruit.x},${fruit.y}`) || 
+       fruits.some(f => f.x === fruit.x && f.y === fruit.y)) &&
+      attempts < 100
+    );
+    
+    fruits.push(fruit);
+    allOccupied.add(`${fruit.x},${fruit.y}`);
+  }
+  
+  return fruits;
 }
 
 export function generateFood(gridSize: number, occupiedPositions: Position[]): Position {
@@ -97,8 +133,8 @@ export function checkSnakeCollision(snake1: Snake, snake2: Snake): boolean {
   );
 }
 
-export function checkFoodEaten(snakeHead: Position, food: Position): boolean {
-  return snakeHead.x === food.x && snakeHead.y === food.y;
+export function checkFoodEaten(snakeHead: Position, food: Position[]): Position | null {
+  return food.find(f => f.x === snakeHead.x && f.y === snakeHead.y) || null;
 }
 
 export function growSnake(snake: Snake): Snake {
