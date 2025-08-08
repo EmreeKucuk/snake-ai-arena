@@ -1,8 +1,10 @@
 import axios from 'axios';
 import { GameState, Direction, Algorithm, ApiResponse } from '../types';
 
-// Use relative API path for both development and production
-const API_BASE_URL = '/api';
+// Use your Render backend URL for production
+const API_BASE_URL = import.meta.env.PROD 
+  ? 'https://snake-ai-arena.onrender.com'  // Replace with your actual Render URL
+  : '/api';
 
 export class ApiService {
   static async getAIMove(
