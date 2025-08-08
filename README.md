@@ -1,49 +1,65 @@
 # Snake AI Arena
 
-An interactive web application where users can play the classic Snake game while competing against AI bots powered by different pathfinding algorithms.
+An interactive web application where users can play the classic Snake game while competing against AI bots powered by different pathfinding algorithms. Features multiple grid sizes, color themes, and advanced game mechanics.
 
-## Features
+## 🎮 Features
 
+### Core Gameplay
 - **Interactive Snake Game**: Classic snake gameplay with smooth controls
-- **AI Competition**: Play against AI bots using various algorithms
-- **Multiple AI Algorithms**:
-  - Random Movement (Easy)
-  - Greedy Algorithm (Easy)
-  - Breadth-First Search (Medium)
-  - Depth-First Search (Medium)
-  - Dijkstra's Algorithm (Hard)
-  - A* Search (Expert)
+- **AI Competition**: Play against AI bots using various pathfinding algorithms
 - **Real-time Gameplay**: Both player and AI snakes move simultaneously
-- **Modern UI**: Built with React, TypeScript, and Tailwind CSS
-- **Score Tracking**: Compare your performance against different AI difficulties
+- **Auto-Reset**: Game automatically resets when starting after game over
+- **Score Tracking**: Real-time scoreboard with player vs AI statistics
+- **Snake Growth**: Both snakes grow with each fruit consumed
 
-## Tech Stack
+### Advanced Features
+- **Multiple Grid Sizes**: Choose between 20×20, 30×30, and 40×40 grids
+- **Dynamic Fruit System**: 1, 2, or 3 fruits based on grid size
+- **Color Themes**: Multiple visual themes for different aesthetics
+- **Keyboard Shortcuts**: 
+  - Space: Play/Pause toggle
+  - R: Reset game
+  - Arrow Keys/WASD: Snake movement
+- **Border-Safe AI**: All algorithms properly avoid borders and collisions
+- **Speed Control**: Adjustable game speed (50ms - 300ms intervals)
+
+### AI Algorithms
+- **Random Movement** (Easy) - Unpredictable movement patterns
+- **Greedy Algorithm** (Easy) - Always moves towards the closest food
+- **Breadth-First Search** (Medium) - Finds shortest path using BFS
+- **Depth-First Search** (Medium) - Explores paths using DFS
+- **Dijkstra's Algorithm** (Hard) - Optimal pathfinding with weighted edges
+- **A* Search** (Expert) - Heuristic-based optimal pathfinding
+
+## 🛠 Tech Stack
 
 ### Frontend
-- **React 18** - UI framework
-- **TypeScript** - Type safety
-- **Tailwind CSS** - Styling
-- **Vite** - Build tool
-- **Axios** - HTTP client
+- **React 18** - Modern UI framework with hooks
+- **TypeScript** - Type safety and better development experience
+- **Tailwind CSS** - Utility-first CSS framework
+- **Vite** - Fast build tool and development server
+- **Axios** - HTTP client for API communication
+- **Lucide React** - Beautiful icon library
 
 ### Backend
-- **Python 3.8+** - Runtime
-- **FastAPI** - Web framework
-- **Pydantic** - Data validation
-- **Uvicorn** - ASGI server
+- **Python 3.10+** - Modern Python runtime
+- **FastAPI** - High-performance web framework
+- **Pydantic** - Data validation and settings management
+- **Uvicorn** - Lightning-fast ASGI server
+- **CORS Middleware** - Cross-origin resource sharing support
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 16+
-- Python 3.8+
-- npm or yarn
+- Node.js 16+ and npm/yarn
+- Python 3.10+
+- Git
 
 ### Installation
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-username/snake-ai-arena.git
+   git clone https://github.com/EmreeKucuk/snake-ai-arena.git
    cd snake-ai-arena
    ```
 
@@ -52,10 +68,20 @@ An interactive web application where users can play the classic Snake game while
    npm install
    ```
 
-3. **Install backend dependencies**
+3. **Set up Python environment and install backend dependencies**
    ```bash
+   # Create virtual environment
+   python -m venv .venv
+   
+   # Activate virtual environment
+   # Windows:
+   .venv\Scripts\activate
+   # macOS/Linux:
+   source .venv/bin/activate
+   
+   # Install dependencies
    cd backend
-   pip install -r requirements.txt
+   pip install fastapi uvicorn pydantic
    ```
 
 ### Running the Application
@@ -63,91 +89,225 @@ An interactive web application where users can play the classic Snake game while
 1. **Start the backend server**
    ```bash
    cd backend
-   python main.py
+   python -m uvicorn main:app --reload --port 8000
    ```
-   The API will be available at `http://localhost:8000`
+   Backend API available at `http://localhost:8000`
 
 2. **Start the frontend development server**
    ```bash
    npm run dev
    ```
-   The application will be available at `http://localhost:3000`
+   Frontend available at `http://localhost:3001`
 
-## Game Controls
+## 🎯 Game Controls
 
-- **Movement**: Arrow keys or WASD
-- **Pause/Resume**: Spacebar
-- **Reset Game**: Reset button
+### Keyboard Controls
+- **Movement**: Arrow keys or WASD keys
+- **Play/Pause**: Spacebar
+- **Reset Game**: R key
 
-## API Endpoints
+### Mouse Controls
+- **Start Game**: Click Start button
+- **Pause Game**: Click Pause button
+- **Reset Game**: Click Reset button
+- **Grid Size**: Select from dropdown (20×20, 30×30, 40×40)
+- **Color Theme**: Choose from available themes
+- **AI Algorithm**: Select from algorithm dropdown
+- **Game Speed**: Adjust with speed slider
 
-- `GET /api/health` - Health check
-- `POST /api/ai-move` - Get next AI move
-- `GET /api/algorithms` - List available algorithms
-
-## Algorithm Details
+## 🧠 Algorithm Details
 
 ### Random Movement
-Simple random direction selection. Easy to beat but unpredictable.
+- **Difficulty**: Easy
+- **Strategy**: Random direction selection with basic collision avoidance
+- **Best for**: Learning game mechanics
 
 ### Greedy Algorithm
-Always moves towards the food in the shortest direct path. Doesn't consider obstacles.
+- **Difficulty**: Easy  
+- **Strategy**: Always moves towards the closest food
+- **Behavior**: Direct pathfinding without complex obstacle consideration
 
 ### Breadth-First Search (BFS)
-Finds the shortest path to food considering all obstacles. Guaranteed optimal path.
+- **Difficulty**: Medium
+- **Strategy**: Explores all paths level by level
+- **Guarantee**: Finds shortest path to food
 
 ### Depth-First Search (DFS)
-Explores possible paths deeply before backtracking. May not find optimal path.
+- **Difficulty**: Medium
+- **Strategy**: Explores paths deeply before backtracking
+- **Behavior**: May find longer paths but explores thoroughly
 
 ### Dijkstra's Algorithm
-Optimal pathfinding algorithm that considers edge weights. Finds shortest path.
+- **Difficulty**: Hard
+- **Strategy**: Optimal pathfinding considering all edge weights
+- **Guarantee**: Always finds the shortest path
 
 ### A* Search
-Heuristic-based pathfinding using Manhattan distance. Efficient and optimal.
+- **Difficulty**: Expert
+- **Strategy**: Heuristic-based pathfinding using Manhattan distance
+- **Advantage**: Efficient and optimal with intelligent path planning
 
-## Development
+## 📡 API Reference
 
-### Project Structure
+### Health Check
+```http
+GET /api/health
+```
+Returns server health status.
+
+### Get AI Move
+```http
+POST /api/ai-move
+Content-Type: application/json
+
+{
+  "game_state": {
+    "ai_snake": [{"x": 15, "y": 10}, {"x": 14, "y": 10}],
+    "player_snake": [{"x": 5, "y": 10}, {"x": 4, "y": 10}],
+    "food": [{"x": 10, "y": 5}],
+    "grid_size": 20
+  },
+  "algorithm": "astar"
+}
+```
+
+### List Algorithms
+```http
+GET /api/algorithms
+```
+Returns available AI algorithms with descriptions.
+
+## 🏗 Project Structure
+
 ```
 snake-ai-arena/
-├── src/                    # Frontend source
+├── src/                    # Frontend source code
 │   ├── components/         # React components
-│   ├── hooks/             # Custom hooks
-│   ├── services/          # API services
-│   ├── types/             # TypeScript types
-│   └── utils/             # Utility functions
-├── backend/               # Backend source
+│   │   ├── GameBoard.tsx   # Game grid and rendering
+│   │   ├── GameStats.tsx   # Score and status display
+│   │   ├── GameControls.tsx # Control buttons
+│   │   ├── AlgorithmSelector.tsx # AI algorithm picker
+│   │   ├── GridSizeSelector.tsx  # Grid size picker
+│   │   └── ColorThemeSelector.tsx # Theme picker
+│   ├── hooks/             # Custom React hooks
+│   │   └── useGameLogic.ts # Main game logic hook
+│   ├── services/          # API communication
+│   │   └── api.ts         # Backend API service
+│   ├── types/             # TypeScript type definitions
+│   │   └── game.ts        # Game-related types
+│   ├── utils/             # Utility functions
+│   │   ├── gameLogic.ts   # Core game mechanics
+│   │   └── themes.ts      # Color theme definitions
+│   └── App.tsx            # Main application component
+├── backend/               # Backend source code
 │   ├── main.py           # FastAPI application
-│   ├── models.py         # Pydantic models
-│   ├── algorithms.py     # AI algorithms
+│   ├── models.py         # Pydantic data models
+│   ├── algorithms.py     # AI pathfinding algorithms
 │   └── requirements.txt  # Python dependencies
-└── package.json          # Frontend dependencies
+├── package.json          # Frontend dependencies
+├── tailwind.config.js    # Tailwind CSS configuration
+├── vite.config.ts        # Vite build configuration
+└── README.md             # Project documentation
 ```
 
-### Adding New Algorithms
+## 🔧 Development
 
-1. Implement the algorithm in `backend/algorithms.py`
-2. Add it to the `ALGORITHM_MAP` in `backend/main.py`
-3. Update the algorithm selector in the frontend
+### Adding New AI Algorithms
 
-## Contributing
+1. **Implement in backend**:
+   ```python
+   # In backend/algorithms.py
+   @staticmethod
+   def your_algorithm_move(game_state: GameStateInput) -> Direction:
+       # Your algorithm implementation
+       return direction
+   ```
+
+2. **Register algorithm**:
+   ```python
+   # In backend/main.py
+   ALGORITHM_MAP = {
+       # ... existing algorithms
+       "your_algorithm": PathfindingAlgorithms.your_algorithm_move,
+   }
+   ```
+
+3. **Update frontend types**:
+   ```typescript
+   // In src/types/game.ts
+   export type Algorithm = 'random' | 'greedy' | 'bfs' | 'dfs' | 'dijkstra' | 'astar' | 'your_algorithm';
+   ```
+
+### Adding New Color Themes
+
+1. **Define theme colors**:
+   ```typescript
+   // In src/utils/themes.ts
+   export const themes = {
+     yourTheme: {
+       background: 'bg-your-bg',
+       grid: 'border-your-border',
+       // ... other colors
+     }
+   };
+   ```
+
+## 🧪 Testing
+
+Run the application and test:
+- ✅ All AI algorithms avoid borders
+- ✅ Score updates correctly
+- ✅ Snakes grow when eating fruit
+- ✅ Auto-reset functionality
+- ✅ Keyboard shortcuts work
+- ✅ Grid size changes properly
+- ✅ Multiple fruits appear based on grid size
+
+## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
 
-## License
+## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Future Enhancements
+## 🚀 Future Enhancements
 
+### AI Improvements
+- [ ] Neural Network-based AI
 - [ ] Genetic Algorithm implementation
 - [ ] Q-Learning (Reinforcement Learning)
-- [ ] Multiplayer support
-- [ ] Tournament mode
-- [ ] Algorithm performance analytics
-- [ ] Custom maze layouts
-- [ ] AI vs AI mode
+- [ ] Minimax algorithm with game tree search
+
+### Game Features
+- [ ] Multiplayer support (real-time)
+- [ ] Tournament mode with brackets
+- [ ] AI vs AI spectator mode
+- [ ] Custom maze layouts and obstacles
+- [ ] Power-ups and special items
+- [ ] Replay system
+- [ ] Statistics and analytics dashboard
+
+### Technical Improvements
+- [ ] WebSocket for real-time updates
+- [ ] Progressive Web App (PWA) support
+- [ ] Mobile responsive design
+- [ ] Performance optimizations
+- [ ] Unit and integration tests
+- [ ] Docker containerization
+- [ ] CI/CD pipeline
+
+## 📊 Performance
+
+- **Frontend**: Optimized React rendering with proper memoization
+- **Backend**: FastAPI with async support for high concurrency
+- **Real-time**: Game loop optimized for smooth 60fps gameplay
+- **Algorithms**: Efficient pathfinding with safety checks and fallbacks
+
+---
+
+**Built with ❤️ using React, TypeScript, FastAPI, and modern web technologies.**
