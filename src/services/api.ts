@@ -2,9 +2,9 @@ import axios from 'axios';
 import { GameState, Direction, Algorithm, ApiResponse } from '../types';
 
 // Use your Render backend URL for production
-const API_BASE_URL = import.meta.env.PROD 
-  ? 'https://snake-ai-arena.onrender.com/api'  // Backend already has /api routes
-  : '/api';
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? '/api'  // Local development
+  : 'https://snake-ai-arena.onrender.com/api';  // Production
 
 export class ApiService {
   static async getAIMove(
@@ -36,9 +36,12 @@ export class ApiService {
 
   static async checkHealthStatus(): Promise<boolean> {
     try {
+      console.log('Checking health at:', `${API_BASE_URL}/health`);
       const response = await axios.get(`${API_BASE_URL}/health`);
+      console.log('Health check response:', response.data);
       return response.status === 200;
-    } catch {
+    } catch (error) {
+      console.error('Health check failed:', error);
       return false;
     }
   }
