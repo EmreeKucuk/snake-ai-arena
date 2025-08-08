@@ -1,10 +1,8 @@
 import axios from 'axios';
 import { GameState, Direction, Algorithm, ApiResponse } from '../types';
 
-// Use Railway backend URL for production, local for development
-const API_BASE_URL = import.meta.env.PROD 
-  ? 'https://snake-ai-backend-production.up.railway.app/api'
-  : '/api';
+// Use relative API path for both development and production
+const API_BASE_URL = '/api';
 
 export class ApiService {
   static async getAIMove(
