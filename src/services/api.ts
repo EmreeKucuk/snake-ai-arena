@@ -36,9 +36,7 @@ export class ApiService {
 
   static async checkHealthStatus(): Promise<boolean> {
     try {
-      console.log('Checking health at:', `${API_BASE_URL}/health`);
       const response = await axios.get(`${API_BASE_URL}/health`);
-      console.log('Health check response:', response.data);
       return response.status === 200;
     } catch (error) {
       console.error('Health check failed:', error);

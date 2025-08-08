@@ -1,9 +1,9 @@
 {
   "name": "snake-ai-arena",
-  "private": true,
+  "private": false,
   "version": "1.0.0",
   "type": "module",
-  "homepage": "https://EmreeKucuk.github.io/snake-ai-arena",
+  "homepage": "https://snake-ai-arena.vercel.app/",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
