@@ -1,0 +1,3 @@
+@echo off
+echo Starting Snake AI Arena Frontend...
+npm run dev
