@@ -3,7 +3,7 @@ import { GameState, Direction, Algorithm, ApiResponse } from '../types';
 
 // Use your Render backend URL for production
 const API_BASE_URL = import.meta.env.PROD 
-  ? 'https://snake-ai-arena.onrender.com'  // Replace with your actual Render URL
+  ? 'https://snake-ai-arena.onrender.com/api'  // Backend already has /api routes
   : '/api';
 
 export class ApiService {
