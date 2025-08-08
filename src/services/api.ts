@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { GameState, Direction, Algorithm, ApiResponse } from '../types';
 
-const API_BASE_URL = '/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 export class ApiService {
   static async getAIMove(

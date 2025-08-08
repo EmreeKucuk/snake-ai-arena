@@ -8,7 +8,6 @@ import {
   checkSnakeCollision, 
   checkFoodEaten, 
   growSnake, 
-  generateMultipleFruits, 
   getAllOccupiedPositions,
   isValidDirection,
   getFruitCount

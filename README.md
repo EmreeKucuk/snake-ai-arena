@@ -275,6 +275,143 @@ Run the application and test:
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## 🚀 Deployment
+
+### Option 1: Vercel (Recommended for Full Stack)
+
+**Frontend + Backend deployment with Vercel:**
+
+1. **Prepare for deployment**:
+   ```bash
+   # Create vercel.json in project root
+   ```
+
+2. **Install Vercel CLI**:
+   ```bash
+   npm i -g vercel
+   ```
+
+3. **Deploy**:
+   ```bash
+   vercel --prod
+   ```
+
+### Option 2: GitHub Pages + Railway/Render
+
+**Frontend on GitHub Pages + Backend on Railway:**
+
+1. **Deploy Frontend to GitHub Pages**:
+   ```bash
+   # Install gh-pages
+   npm install --save-dev gh-pages
+   
+   # Add to package.json scripts:
+   "homepage": "https://EmreeKucuk.github.io/snake-ai-arena",
+   "predeploy": "npm run build",
+   "deploy": "gh-pages -d dist"
+   
+   # Deploy
+   npm run deploy
+   ```
+
+2. **Deploy Backend to Railway**:
+   - Go to [Railway.app](https://railway.app)
+   - Connect your GitHub repo
+   - Select backend folder
+   - Add environment variables
+   - Deploy automatically
+
+### Option 3: Netlify + Heroku
+
+**Frontend on Netlify + Backend on Heroku:**
+
+1. **Netlify Frontend**:
+   - Go to [Netlify](https://netlify.com)
+   - Connect GitHub repo
+   - Build command: `npm run build`
+   - Publish directory: `dist`
+
+2. **Heroku Backend**:
+   - Create `Procfile` in backend/:
+     ```
+     web: uvicorn main:app --host 0.0.0.0 --port $PORT
+     ```
+   - Deploy to Heroku
+
+### Option 4: Complete GitHub Actions CI/CD
+
+**Automated deployment with GitHub Actions:**
+
+Create `.github/workflows/deploy.yml`:
+
+```yaml
+name: Deploy Snake AI Arena
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: npm install
+        
+      - name: Build
+        run: npm run build
+        
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+
+  deploy-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Deploy to Railway
+        uses: railway-app/railway-deploy@v1
+        with:
+          service: backend
+          token: ${{ secrets.RAILWAY_TOKEN }}
+```
+
+## 🌐 Environment Configuration
+
+### Frontend Environment Variables
+
+Create `.env` file:
+```env
+VITE_API_URL=https://your-backend-url.com
+VITE_APP_TITLE=Snake AI Arena
+```
+
+### Backend Environment Variables
+
+For production deployment:
+```env
+CORS_ORIGINS=https://your-frontend-url.com
+PORT=8000
+ENVIRONMENT=production
+```
+
+### Update API Base URL
+
+Update `src/services/api.ts`:
+```typescript
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+```
+
 ## 🚀 Future Enhancements
 
 ### AI Improvements
